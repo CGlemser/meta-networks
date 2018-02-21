@@ -5,6 +5,8 @@
 #        statTransformFun.R
 #        plotNetworkFun.R
 #        addLegend.R
+#        EntropyFun.R
+#        ThetaFun.R
 # 
 # Output: Testplot_Legend.pdf
 #         Testplot_noLegend.pdf
@@ -17,8 +19,11 @@
 #   addLegend
 
 # set working directory
-setwd("D:/GoogleDrive/Mailand_Praktikum/MetaAnalysisNetworks/")
+setwd("D:/GoogleDrive/Mailand_Praktikum/MetaAnalysisNetworks/meta-networks")
 
+#######################
+## testing out plots ##
+#######################
 
 # source functions
 source("extractAuthorsFun.R")
@@ -28,7 +33,7 @@ source("addLegend.R")
 
 library(plotrix) 
 library(qgraph)
-
+library(igraph)
 
 # load data
 dat <- read.table("fulldata_noetal.txt")
@@ -72,7 +77,114 @@ plot(testplot2$net)
 dev.off()
 
 
-########## components (still hard-coded) ##########
+
+###############################
+## testing out Entropy stuff ##
+###############################
+source("EntropyFun.R")
+source("ThetaFun.R")
+
+##### !!!!!!!! #######
+# extremely slow atm #
+##### !!!!!!!! #######
+
+# read out adjacency matrix
+library(igraph)
+net.ig <- igraph::as.igraph(testplot$net)
+adjmat <- as.matrix(igraph::get.adjacency(net.ig))
+
+# cut into 4 classes [0; .2], [.2; .5], [.5; .8] [.8; maxvalue]
+catES <- cut(abs(testplot$col_avstat),
+		         breaks = c(0, .2, .5, .8, max(abs(testplot$col_avstat),
+																					 na.rm = TRUE)),
+						 right = FALSE, include.lowest = TRUE)
+
+adjmatES <- adjmat[!is.na(catES), !is.na(catES)]  # delete NA cases
+type <- as.numeric(na.omit(catES)) # class vector w/o NA cases
+n <- dim(adjmatES)[1]  # no of nodes
+Q <- 4  # no of classes
+
+# EntropyQ -> lots of matrix multiplications, which R is apparently bad at
+EntropyQ(adjmatES, type, n Q)    # ~25s
+Theta(adjmatES, type, n, Q, 10)  # ~300s
+
+# Open questions:
+# -> negative entropies??
+# -> in Theta.m: shouldn't it be (entropymean - Sigmac)?
+#                Or makes no diff? absolute values?
+# -> in Theta.m: Signmac at the end is the observed entropy, not the
+#                entropy from the last iteration right?
+# -> How do I construct CI (SE?) / conduct a test?
+
+
+
+########################
+## QAP covariate test ##
+########################
+
+net.ig <- igraph::as.igraph(testplot3$net)
+# two nodes missing all of a sudden? wth?
+adjmat <- as.matrix(igraph::get.adjacency(net.ig))
+
+# ES <- abs(testplot3$node_avstat)  # too many NAs to test it properly
+
+ES <- runif(205, 0, 2)  # random effect size per node
+neigh <- ego(net.ig)  # neighborhood for each vertex
+
+meanES <- numeric(vcount(net.ig))
+  
+for(i in 1:vcount(net.ig)){
+  hood <- neigh[[i]]
+  
+  # length(hood) == 1 means node has no neighbours
+  if(length(hood) == 1){
+	  meanES[i] <- 0
+	} else {
+		# if effect size is missing for the ego node, it is not considered
+	  if(is.na(ES[i])){
+  	  meanES[i] <- NA
+	  # otherwise: take the mean effect size of all neighboring nodes
+		} else {
+			meanES[i] <- mean(ES[hood[-1]])
+		}
+	}
+}
+cor.ori <- cor(ES, meanES, use = "pairwise.complete.obs")
+
+cor.per <- numeric(numreps)
+for(j in 1:numreps){
+  ES.per <- sample(ES)
+  meanES <- numeric(vcount(net.ig))
+  for(i in 1:vcount(net.ig)){
+    hood <- neigh[[i]]
+  
+    # length(hood) == 1 means node has no neighbours
+    if(length(hood) == 1){
+  	  meanES[i] <- 0
+  	} else {
+  		# if effect size is missing for the ego node, it is not considered
+  	  if(is.na(ES.per[i])){
+  		  meanES[i] <- NA
+  	  # otherwise: take the mean effect size of all neighboring nodes
+  		} else {
+  			meanES[i] <- mean(ES.per[hood[-1]])
+  		}
+  	}
+  }
+  cor.per[j] <- cor(ES.per, meanES, use = "pairwise.complete.obs")
+}
+
+## test decision ##
+plot(density(cor.per))
+# .025/.975 quantiles -> cutoff points for rejecting H0
+abline(v = quantile(cor.per, c(.025, .975)), lty = 2, col = "blue")
+abline(v = cor.ori, col = "red")  # observed correlation
+
+
+
+###################################
+## components (still hard-coded) ##
+###################################
 # -> make into function once it's fail-safe
 
 # transform to igraph object
