@@ -46,11 +46,11 @@ statTransform <- function(x, refsID, data, auts = NULL, resol = 100,
 	}
 
 	if(bypap){
-	  averagestat <- droplevels(aggregate(data[,x] ~ data[,refsID],
-																				FUN = mean))
-	  valNA <- unique(data[,refsID])[!levels(data[,refsID]) %in%
-													 levels(averagestat[,1])]  # papers w/ no info
-		colnames(averagestat) <- c("value", "avstat")
+	  averagestat <- aggregate(data[,x] ~ data[,refsID], FUN = mean,
+														 na.action = "na.pass")
+	  colnames(averagestat) <- c("value", "avstat")  
+		# read out paper with NA
+	  valNA <- averagestat[is.na(averagestat$avstat), "value"]	
 	}
 	
 
@@ -86,5 +86,6 @@ statTransform <- function(x, refsID, data, auts = NULL, resol = 100,
 		                                   # to make it recognizable
 		output2 <- node_size # scales the automatic node height/width of qplot
 	}
-	list(clrs = output1, node_size = output2, colgrad = pltt)
+	list(clrs = output1, node_size = output2, colgrad = pltt,
+			 avstat = averagestat$avstat)
 }

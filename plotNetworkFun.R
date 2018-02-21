@@ -63,18 +63,23 @@ plotNetwork <- function(refsID, data, colors = c("lightblue", "darkblue"),
 	                  DoNotPlot = TRUE)
 	dev.off()
 
+	node_avstat <- col_avstat <- NULL
+
   # restrict averagestat to 0-100 (node color) / a scalar (node size)
 	if(!is.null(size)){
 	
   	if(!paperNet){
-	    node_size <- statTransform(size, refsID, data, auts = auts_minPubs, 
+	    out <- statTransform(size, refsID, data, auts = auts_minPubs, 
 															   size = TRUE, byaut = TRUE,
-																 size.scaling = size.scaling)[["node_size"]]
+																 size.scaling = size.scaling)
 		} else {
-      node_size <- statTransform(size, refsID, data, auts = auts_minPubs,
+      out <- statTransform(size, refsID, data, auts = auts_minPubs,
 																 size = TRUE, bypap = TRUE,
-																 size.scaling = size.scaling)[["node_size"]]
+																 size.scaling = size.scaling)
 		}
+
+	  node_avstat <- out[["avstat"]]
+		node_size <- out[["node_size"]]
 
 	  Network$graphAttributes$Nodes$shape[is.na(node_size)] <- "rectangle"
 		node_size[is.na(node_size)] <- mean(size.scaling)
@@ -82,6 +87,7 @@ plotNetwork <- function(refsID, data, colors = c("lightblue", "darkblue"),
 		  Network$graphAttributes$Nodes$height <-
 			  node_size*Network$graphAttributes$Nodes$height
 	}
+
 
 	if(!is.null(color)){
 		if(!paperNet){
@@ -91,6 +97,8 @@ plotNetwork <- function(refsID, data, colors = c("lightblue", "darkblue"),
 		  out <- statTransform(color, refsID, data, auts_minPubs,
 	    	                   bypap = TRUE, color = TRUE, colors = colors)
 		}
+
+	  col_avstat <- out[["avstat"]]
 	  clrs <- out[["clrs"]]
  	  colgrad <- out[["colgrad"]]
 	  Network$graphAttributes$Nodes$color <- clrs
@@ -108,7 +116,8 @@ plotNetwork <- function(refsID, data, colors = c("lightblue", "darkblue"),
 	# edgL   <- cbind(Network$Edgelist$from, Network$Edgelist$to,
 	#								  Network$Edgelist$weight)
 
-	output <- list(net = Network, colgrad = colgrad)
+	output <- list(net = Network, colgrad = colgrad,
+								 col_avstat = col_avstat, node_avstat = node_avstat)
 	# net.ig = net.ig, adjM = adjM, edgL = edgL)
 
 }
