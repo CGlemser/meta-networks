@@ -121,66 +121,14 @@ Theta(adjmatES, type, n, Q, 10)  # ~300s
 ########################
 ## QAP covariate test ##
 ########################
+library(igraph)
+source("covQAPtest.R")  # test function + printing function
 
-net.ig <- igraph::as.igraph(testplot3$net)
-# two nodes missing all of a sudden? wth?
-adjmat <- as.matrix(igraph::get.adjacency(net.ig))
-
-# ES <- abs(testplot3$node_avstat)  # too many NAs to test it properly
-
-ES <- runif(205, 0, 2)  # random effect size per node
-neigh <- ego(net.ig)  # neighborhood for each vertex
-
-meanES <- numeric(vcount(net.ig))
-  
-for(i in 1:vcount(net.ig)){
-  hood <- neigh[[i]]
-  
-  # length(hood) == 1 means node has no neighbours
-  if(length(hood) == 1){
-	  meanES[i] <- 0
-	} else {
-		# if effect size is missing for the ego node, it is not considered
-	  if(is.na(ES[i])){
-  	  meanES[i] <- NA
-	  # otherwise: take the mean effect size of all neighboring nodes
-		} else {
-			meanES[i] <- mean(ES[hood[-1]])
-		}
-	}
-}
-cor.ori <- cor(ES, meanES, use = "pairwise.complete.obs")
-
-cor.per <- numeric(numreps)
-for(j in 1:numreps){
-  ES.per <- sample(ES)
-  meanES <- numeric(vcount(net.ig))
-  for(i in 1:vcount(net.ig)){
-    hood <- neigh[[i]]
-  
-    # length(hood) == 1 means node has no neighbours
-    if(length(hood) == 1){
-  	  meanES[i] <- 0
-  	} else {
-  		# if effect size is missing for the ego node, it is not considered
-  	  if(is.na(ES.per[i])){
-  		  meanES[i] <- NA
-  	  # otherwise: take the mean effect size of all neighboring nodes
-  		} else {
-  			meanES[i] <- mean(ES.per[hood[-1]])
-  		}
-  	}
-  }
-  cor.per[j] <- cor(ES.per, meanES, use = "pairwise.complete.obs")
-}
-
-## test decision ##
-plot(density(cor.per))
-# .025/.975 quantiles -> cutoff points for rejecting H0
-abline(v = quantile(cor.per, c(.025, .975)), lty = 2, col = "blue")
-abline(v = cor.ori, col = "red")  # observed correlation
-
-
+# transform into igraph object
+net.ig <- as.igraph(testplot$net)
+out <- covQAPtest(net.ig, runif(205, 0, 2), 100, .95)
+# for testing purposes, I use a random stats vector, because original one
+# has too many NAs for a proper test
 
 ###################################
 ## components (still hard-coded) ##
