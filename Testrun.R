@@ -19,7 +19,7 @@
 #   addLegend
 
 # set working directory
-setwd("D:/GoogleDrive/Mailand_Praktikum/MetaAnalysisNetworks/meta-networks")
+setwd("F:/GoogleDrive/Mailand_Praktikum/MetaAnalysisNetworks/meta-networks")
 
 #######################
 ## testing out plots ##
@@ -124,11 +124,16 @@ Theta(adjmatES, type, n, Q, 10)  # ~300s
 library(igraph)
 source("covQAPtest.R")  # test function + printing function
 
-# transform into igraph object
-net.ig <- as.igraph(testplot$net)
-out <- covQAPtest(net.ig, runif(205, 0, 2), 100, .95)
-# for testing purposes, I use a random stats vector, because original one
-# has too many NAs for a proper test
+# transform into igraph object (for some reason 205 nodes instead of 207?)
+# also gives out a few warnings?
+net.ig <- as.igraph(testplot3$net)
+out  <- covQAPtest(net.ig, runif(205, 0, 2), 100, .95)
+# for testing purposes: random stats vector (no NAs)
+
+stattest <- testplot3$node_avstat[1:205]
+out2 <- covQAPtest(net.ig, stattest, 100, .99)  # lots of NAs
+# -> maybe include number of observations that were used for 
+
 
 ###################################
 ## components (still hard-coded) ##
