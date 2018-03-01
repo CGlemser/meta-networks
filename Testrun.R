@@ -105,7 +105,7 @@ n <- dim(adjmatES)[1]  # no of nodes
 Q <- 4  # no of classes
 
 # EntropyQ -> lots of matrix multiplications, which R is apparently bad at
-EntropyQ(adjmatES, type, n Q)    # ~25s
+EntropyQ(adjmatES, type, n, Q)    # ~25s
 Theta(adjmatES, type, n, Q, 10)  # ~300s
 
 # Open questions:
