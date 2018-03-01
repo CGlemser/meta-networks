@@ -26,7 +26,7 @@ tmd <- as.matrix(ma[,-1])
 papernet <- tmd %*% t(tmd)
 diag(papernet) <- 0
 stat <- ma[,1]
-vsz <- 10*(index-min(index))/max(index-min(index))
+vsz <- 10*(stat-min(stat))/max(stat-min(stat))
 qg.papernet <- qgraph(papernet, layout = "spring", vsize = vsz)
 ig.papernet <- as.igraph(qg.papernet)
 covQAPtest(ig.papernet, stat, numreps = 500, conf.level = .95)
